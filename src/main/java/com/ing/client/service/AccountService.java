@@ -8,6 +8,7 @@ import net.danlucian.psd2.ing.flow.Flow;
 import net.danlucian.psd2.ing.rpc.Client;
 import net.danlucian.psd2.ing.security.ClientSecrets;
 import net.danlucian.psd2.ing.security.SecurityUtil;
+import net.danlucian.psd2.ing.time.DateUtil;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
@@ -30,11 +31,13 @@ public class AccountService extends Client {
 
     public Flux<Account> findAll(String customerAccessToken) {
 
+
+        final String currentDate = DateUtil.getCurrentDateAsString();
         final String digest = SecurityUtil.generateDigestAndConvert("");
 
         final String signature = SecurityUtil.generateSignature(
                 clientSecrets.getClientSigningKey(),
-                signingTemplate("get", "/v3/accounts", digest)
+                signingTemplate("get", "/v3/accounts", currentDate, digest)
         );
         final String authorization =
                 "keyId=\"" + props.getKeyId() + "\",algorithm=\"rsa-sha256\",headers=\"(request-target) date digest\",signature=\"" + signature + "\"";
@@ -47,7 +50,7 @@ public class AccountService extends Client {
                 .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                 .header("Authorization", "Bearer " + customerAccessToken)
                 .header("Digest", digest)
-                .header("Date", currentDate)
+                .header("Date", DateUtil.getCurrentDateAsString())
                 .header("Signature", authorization)
                 .exchangeToFlux(res -> {
 
